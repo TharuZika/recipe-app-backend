@@ -1,16 +1,54 @@
+const { default: axios } = require("axios");
+const User = require("../models/User");
+
 exports.getRecipesByCategory = async (req, res) => {
     const { category } = req.params;
     try {
       const response = await axios.get(
-        `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`
+        process.env.THEMEALDB_URL+`filter.php?c=${category}`
       );
-      res.json(response.data.meals);
+      res.json({flag: true, data: response.data.meals});
     } catch (err) {
-      res.status(500).json({ msg: 'Error fetching recipes' });
+      console.log(err);
+      res.status(500).json({ flag: false, msg: 'Error fetching recipes' });
+    }
+  };
+
+  exports.getCategories = async (req, res) => {
+    try {
+      const response = await axios.get(
+        process.env.THEMEALDB_URL+`categories.php`
+      );
+      // console.log(resposne.data);
+      res.json({flag: true, data: response.data});
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ flag: false, msg: 'Error fetching categories' });
+    }
+  };
+
+  exports.getRecipesById = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const response = await axios.get(
+        process.env.THEMEALDB_URL+`lookup.php?i=${id}`
+      );
+  
+      console.log(response);
+  
+      if (response.data.meals && response.data.meals.length > 0) {
+        res.json({ flag: true, data: response.data.meals[0] });
+      } else {
+        res.json({ flag: true, data: [] });
+      }
+  
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ flag: false, msg: 'Error fetching recipes' });
     }
   };
   
-  // Add/Remove favorite recipes (extend as needed)
+  
   exports.addFavoriteRecipe = async (req, res) => {
     const { recipeId } = req.body;
     try {
@@ -38,3 +76,23 @@ exports.getRecipesByCategory = async (req, res) => {
       res.status(500).json({ msg: 'Server error' });
     }
   };
+
+  exports.getFavoriteRecipes = async (req, res) => {
+    try {
+      const user = await User.findById(req.user.userId).populate('favoriteRecipes');
+      const favMeals = [];
+      for (const meal of user.favoriteRecipes) {
+        const mealId = meal;
+        const response = await axios.get(process.env.THEMEALDB_URL+`lookup.php?i=${mealId}`);
+        if (response.data.meals) {
+          favMeals.push(response.data.meals[0]);
+        }
+      }
+      
+      res.json({ favoriteRecipes: favMeals });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: 'Error when getting favorites' });
+    }
+  };
+  

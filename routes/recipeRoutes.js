@@ -1,10 +1,13 @@
 const express = require('express');
-const { getRecipesByCategory, addFavoriteRecipe, removeFavoriteRecipe } = require('../controllers/recipeController');
+const { getRecipesById, getRecipesByCategory, addFavoriteRecipe, removeFavoriteRecipe, getFavoriteRecipes, getCategories } = require('../controllers/recipeController');
 const authMiddleware = require('../middleware/authMiddleware');
 const router = express.Router();
 
-router.get('/recipes/:category', getRecipesByCategory);
+router.get('/recipes/category/:category', getRecipesByCategory);
+router.get('/recipes/categories', getCategories);
+router.get('/recipes/find/:id', getRecipesById);
 router.post('/recipes/favorites', authMiddleware, addFavoriteRecipe);
-router.get('/recipes/favorites/delete:id', authMiddleware, removeFavoriteRecipe);
+router.post('/recipes/favorites/delete', authMiddleware, removeFavoriteRecipe);
+router.get('/recipes/favorites', authMiddleware, getFavoriteRecipes);
 
 module.exports = router;

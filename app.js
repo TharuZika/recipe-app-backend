@@ -10,15 +10,13 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:3000', // Your frontend's address
+    origin: process.env.FRONT_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true // If you are handling cookies or authentication
+    credentials: true
 }));
 
-// Connect to the database
 connectDB();
 
-// Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api', recipeRoutes);
 

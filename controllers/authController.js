@@ -1,35 +1,51 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 
-//Register
+// Register
 exports.registerUser = async (req, res) => {
-  const { username, email, password } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ flag: false, errors: errors.array() });
+  }
+
+  const { firstname, lastname, email, phonenumber, password } = req.body;
+
   try {
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(200).json({ msg: 'User already exists' });
+      return res.status(200).json({ flag: false, msg: 'User already exists' });
     }
-
+    
     user = new User({
-      username,
+      firstname,
+      lastname,
       email,
-      password,
+      phonenumber,
+      password
     });
 
     await user.save();
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
-    res.status(201).json({ token });
+    res.status(201).json({ flag: true, token: token });
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    // console.log(err);
+    res.status(200).json({ flag: false, msg: 'Server error' });
   }
 };
 
-//Login
+// Login
 exports.loginUser = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ flag: false, errors: errors.array() });
+  }
+
   const { email, password } = req.body;
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -46,6 +62,6 @@ exports.loginUser = async (req, res) => {
     });
     res.status(200).json({ flag: true, token: token });
   } catch (err) {
-    res.status(500).json({ flag: false, msg: 'Server error' });
+    res.status(200).json({ flag: false, msg: 'Server error' });
   }
 };
